@@ -1,7 +1,9 @@
 (import ../../programmering/freja-indent-line/indentation)
 (import ../../programmering/freja-jandent/freja-jandent/jandent-format)
-(import ../../programmering/freja-eval-last-expr/eval-last-expression)
+(import ../../programmering/freja-eval-last-expr/freja-eval-last-expr/eval-last-expression)
+(import freja-stedit/freja-stedit)
 (import freja/frp :prefix "")
+(import ../../programmering/parse-symbols/hold-alt)
 (import freja/state)
 (import freja/new_gap_buffer :prefix "")
 (import freja/input :prefix "")
@@ -60,8 +62,13 @@
 (set-key search-binds [:caps-lock :n] |(:search-backwards $))
 (set-key search-binds [:caps-lock :y] search-dialog)
 
-(global-set-key [:caps-lock :a] select-all)
-(global-set-key [:caps-lock :i] copy)
+(global-set-key [:caps-lock :a] move-to-start-of-line)
+(global-set-key [:caps-lock :q] delete-word-backward!)
+(global-set-key [:caps-lock :w] delete-word-forward!)
+(global-set-key [:caps-lock :d] move-to-end-of-line)
+(global-set-key [:caps-lock :u] page-down!)
+(global-set-key [:caps-lock :i] page-up!)
+# (global-set-key [:caps-lock :i] copy)
 (global-set-key [:caps-lock :b] cut!)
 (global-set-key [:caps-lock :.] paste!)
 (global-set-key [:caps-lock :e] fh/save-and-dofile)
@@ -71,11 +78,7 @@
 (global-set-key [:caps-lock :s] |(:open-file $))
 (global-set-key [:caps-lock :shift :y] (fn [props]
                                          (print "formatting")
-                                         (-> props
-                                             #                                             format-code
-                                             #                                             reset-blink
-                                             )))
-#
+                                         (format! props)))
 
 (import freja/evaling)
 
@@ -95,7 +98,7 @@
                                        (print "formatting")
                                        (format! props)))
 
-(set-key gb-binds [:control :shift :y] jandent-format/jandent-format)
+#(set-key gb-binds [:control :shift :y] jandent-format/jandent-format)
 
 
 
@@ -113,4 +116,4 @@
 (global-set-key [:caps-lock :shift :p] select-forward-word)
 (global-set-key [:caps-lock :o] backward-word)
 (global-set-key [:caps-lock :shift :o] select-backward-word)
- 
+(global-set-key [:caps-lock :tab] swap-top-two-buffers)
