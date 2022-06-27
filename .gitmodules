@@ -1,0 +1,6 @@
+[submodule "freja-indent-line"]
+	path = freja-indent-line
+	url = https://github.com/sogaiu/freja-indent-line
+[submodule "freja-stedit"]
+	path = freja-stedit
+	url = https://github.com/sogaiu/freja-stedit

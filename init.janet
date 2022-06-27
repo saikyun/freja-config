@@ -1,9 +1,8 @@
-(import ../../programmering/freja-indent-line/indentation)
-(import ../../programmering/freja-jandent/freja-jandent/jandent-format)
-(import ../../programmering/freja-eval-last-expr/freja-eval-last-expr/eval-last-expression)
-(import freja-stedit/freja-stedit)
-(import freja/frp :prefix "")
-(import ../../programmering/parse-symbols/hold-alt)
+(import ./freja-indent-lines-default)
+#(import ../../programmering/freja-jandent/freja-jandent/jandent-format)
+#(import ../../programmering/freja-eval-last-expr/freja-eval-last-expr/eval-last-expression)
+(import ./freja-stedit-defaults)
+#(import ../../programmering/parse-symbols/hold-alt)
 (import freja/state)
 (import freja/new_gap_buffer :prefix "")
 (import freja/input :prefix "")
@@ -11,109 +10,98 @@
 (import freja/render_new_gap_buffer :as rgb)
 (import freja/new_gap_buffer :as gb)
 (import freja/file-handling :as fh)
-(import freja/events :as e)
 (import freja/hiccup :as h)
 (import freja/find-file)
-
-(def import-c (require "../../programmering/cgen/import-c/import-c"))
-(put module/cache "freja/import-c" import-c)
-(def cgen (require "../../programmering/cgen/import-c/cgen"))
-(put module/cache "freja/cgen" cgen)
-
-(global-set-key [:control :r] find-file/find-file-dialog)
-
-(global-set-key [:control :k]
-                (fn [_]
-                  (print "reepeat")
-                  (e/put! state/editor-state :force-refresh true)))
-
-(global-set-key [:control :shift :i] show-checkpoints)
-
 (import freja/echoer)
-#(import ./show-errors)
+(import freja/event/subscribe :as s)
+(import ./loc-this-day)
 
-#(show-errors/init)
+(def text-size 24)
 
-(print "Running my init file :)")
+(s/put! state/editor-state :text/size text-size)
 
-(global-set-key
-  [:caps-lock :alt :p]
-  (fn [_]
-    (:toggle-console state/editor-state)))
+(def mod2 :alt)
+(def mod1 :right-control)
 
-(global-set-key
-  [:caps-lock :alt :i]
-  (fn [_]
-    (print "dafuq")
-    (gb/replace-content (echoer/state-big :gb) @"")))
+(global-set-key [mod1 :shift :u]
+                (fn [_] (loc-this-day/print-loc-change-since)))
 
-(global-set-key
-  [:control :alt :p]
-  (fn [_]
-    (:toggle-console state/editor-state)))
+(global-set-key [mod1 :shift :p] echoer/toggle-console)
+(global-set-key [mod1 :shift :i] echoer/clear-console)
 
 (global-set-key
-  [:control :alt :i]
+  [mod1 :0]
   (fn [_]
-    (gb/replace-content (echoer/state-big :gb) @"")))
+    (s/put! state/editor-state :text/size text-size)
+    (print "Reset text size: " (state/editor-state :text/size))))
 
-(setdyn :pretty-format "%.40M")
+(global-set-key
+  [mod1 :-]
+  (fn [_]
+    (s/update! state/editor-state :text/size |(min 70 (inc $)))
+    (print "Updated text size: " (state/editor-state :text/size))))
 
-(set-key search-binds [:caps-lock :n] |(:search-backwards $))
-(set-key search-binds [:caps-lock :y] search-dialog)
+(global-set-key
+  [mod1 (keyword "'")]
+  (fn [_]
+    (s/update! state/editor-state :text/size |(max 8 (dec $)))
+    (print "Updated text size: " (state/editor-state :text/size))))
 
-(global-set-key [:caps-lock :a] move-to-start-of-line)
-(global-set-key [:caps-lock :q] delete-word-backward!)
-(global-set-key [:caps-lock :w] delete-word-forward!)
-(global-set-key [:caps-lock :d] move-to-end-of-line)
-(global-set-key [:caps-lock :u] page-down!)
-(global-set-key [:caps-lock :i] page-up!)
-# (global-set-key [:caps-lock :i] copy)
-(global-set-key [:caps-lock :b] cut!)
-(global-set-key [:caps-lock :.] paste!)
-(global-set-key [:caps-lock :e] fh/save-and-dofile)
-(global-set-key [:caps-lock (keyword ";")] save-file)
-(global-set-key [:caps-lock :/] undo!)
-(global-set-key [:caps-lock :y] search-dialog)
-(global-set-key [:caps-lock :s] |(:open-file $))
-(global-set-key [:caps-lock :shift :y] (fn [props]
-                                         (print "formatting")
-                                         (format! props)))
+(global-set-key [mod1 :r] find-file/find-file-dialog)
 
-(import freja/evaling)
+(set-key search-binds [mod1 :n] |(:search-backwards $))
+(set-key search-binds [mod1 :y] search-dialog)
 
-#(global-set-key [:shift :enter] eval-it)
+(global-set-key [mod1 :shift :y] (fn [props]
+                                   (print "formatting")
+                                   (format! props)))
 
-(global-set-key [:control :a] select-all)
-(global-set-key [:control :i] copy)
-(global-set-key [:control :b] cut!)
-(global-set-key [:control :.] paste!)
-(global-set-key [:control :p] fh/save-and-dofile)
-(global-set-key [:control (keyword ";")] save-file)
-(global-set-key [:control :/] undo!)
-(global-set-key [:control :y] search-dialog)
-(global-set-key [:control :s] |(:open-file $))
-(global-set-key [:control :u] |(:goto-line $))
-(global-set-key [:control :shift :y] (fn [props]
-                                       (print "formatting")
-                                       (format! props)))
+(do comment
+  (global-set-key [mod1 :p] fh/save-and-dofile)
 
-#(set-key gb-binds [:control :shift :y] jandent-format/jandent-format)
+  (global-set-key [mod1 :a] select-all)
+  (global-set-key [mod2 :a] move-to-start-of-line)
+  (global-set-key [mod2 :q] delete-word-backward!)
+  (global-set-key [mod2 :w] delete-word-forward!)
+  (global-set-key [mod1 (keyword ",")] close-buffer)
+  (global-set-key [mod2 :d] move-to-end-of-line)
+  (global-set-key [mod2 :u] page-down!)
+  (global-set-key [mod2 :i] page-up!)
 
+  (global-set-key [mod1 :i] copy)
+  (global-set-key [mod1 :b] cut!)
+  (global-set-key [mod1 :.] paste!)
 
+  (global-set-key [mod1 (keyword ";")] save-file)
+  (global-set-key [mod1 :/] undo!)
+  (global-set-key [mod1 :t] redo!)
+  (global-set-key [mod1 :y] search-dialog)
+  (global-set-key [mod1 :s] |(:open-file $))
+  (global-set-key [mod1 :u] |(:goto-line $)))
 
-(global-set-key [:caps-lock :j] rgb/move-down!)
-(global-set-key [:caps-lock :k] rgb/move-up!)
-(global-set-key [:caps-lock :shift :j] rgb/select-move-down!)
-(global-set-key [:caps-lock :shift :k] rgb/select-move-up!)
+#(put gb-binds :control nil)
+#(put global-keys :control nil)
 
-(global-set-key [:caps-lock (keyword ";")] forward-char)
-(global-set-key [:caps-lock :shift (keyword ";")] select-forward-char)
-(global-set-key [:caps-lock :l] backward-char)
-(global-set-key [:caps-lock :shift :l] select-backward-char)
+(do comment
+  (global-set-key [mod2 :j] rgb/move-down!)
+  (global-set-key [mod2 :k] rgb/move-up!)
+  (global-set-key [mod2 :shift :j] rgb/select-move-down!)
+  (global-set-key [mod2 :shift :k] rgb/select-move-up!)
 
-(global-set-key [:caps-lock :p] forward-word)
-(global-set-key [:caps-lock :shift :p] select-forward-word)
-(global-set-key [:caps-lock :o] backward-word)
-(global-set-key [:caps-lock :shift :o] select-backward-word)
-(global-set-key [:caps-lock :tab] swap-top-two-buffers)
+  (global-set-key [mod2 (keyword ";")] forward-char)
+  (global-set-key [mod2 :shift (keyword ";")] select-forward-char)
+  (global-set-key [mod2 :l] backward-char)
+  (global-set-key [mod2 :shift :l] select-backward-char)
+
+  (global-set-key [mod1 :tab] swap-top-two-buffers)
+
+  #(set-key gb-binds [mod1 :shift :y] jandent-format/jandent-format)
+)
+
+(global-set-key [mod1 :enter] eval-it)
+
+(global-set-key [mod2 :p] forward-word)
+(global-set-key [mod2 :shift :p] select-forward-word)
+(global-set-key [mod2 :o] backward-word)
+#(set-key gb-binds [mod2 :o] nil)
+(global-set-key [mod2 :shift :o] select-backward-word)
